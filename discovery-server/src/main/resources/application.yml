@@ -1,0 +1,19 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: discovery-server
+  config:
+    import: configserver:http://localhost:8080
+
+management:
+  endpoint:
+    web:
+      exposure:
+        include: "*"
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false

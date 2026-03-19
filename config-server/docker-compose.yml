@@ -1,0 +1,6 @@
+services:
+
+  config-server:
+    image: config-server
+    ports:
+     - "8080:8080"
