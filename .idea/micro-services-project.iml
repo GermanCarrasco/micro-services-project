@@ -9,6 +9,7 @@
       <sourceFolder url="file://$MODULE_DIR$/auth-service" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/customer-service/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/account-service/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/transaction-service/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

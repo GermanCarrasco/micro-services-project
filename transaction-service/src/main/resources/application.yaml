@@ -1,6 +1,6 @@
 spring:
   application:
-    name: account-service
+    name: transaction-service
 
   config:
     import: optional:configserver:http://localhost:8080

@@ -8,5 +8,5 @@ import java.util.List;
 public interface IAccountService {
 
     public AccountResponse create(AccountRequest accountRequest);
-    public List<AccountResponse> findAll();
+    public List<AccountResponse> getAll();
 }
