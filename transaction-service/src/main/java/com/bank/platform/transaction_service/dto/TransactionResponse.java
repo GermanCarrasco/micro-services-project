@@ -5,12 +5,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@AllArgsConstructor
-@NoArgsConstructor
+import java.time.LocalDateTime;
+
+
 @Getter
 @Setter
-public class TransactionRequest {
+@NoArgsConstructor
+@AllArgsConstructor
+public class TransactionResponse {
+
+    private Long id;
     private Long accountId;
     private String type;
     private Double amount;
+    private LocalDateTime createdAt;
 }
