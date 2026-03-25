@@ -2,9 +2,11 @@ package com.bank.platform.transaction_service.service;
 
 import com.bank.platform.transaction_service.client.IAccountClient;
 import com.bank.platform.transaction_service.dto.AccountResponse;
+import com.bank.platform.transaction_service.dto.TransactionEvent;
 import com.bank.platform.transaction_service.dto.TransactionRequest;
 import com.bank.platform.transaction_service.dto.TransactionResponse;
 import com.bank.platform.transaction_service.entity.Transaction;
+import com.bank.platform.transaction_service.kafka.TransactionProducer;
 import com.bank.platform.transaction_service.repository.ITransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ public class TransactionServiceImpl implements ITransactionService{
 
     private final ITransactionRepository transactionRepository;
     private final IAccountClient accountClient;
+    private final TransactionProducer producer;
 
     @Override
     public TransactionResponse createTransaction(TransactionRequest transactionRequest) {
@@ -46,6 +49,13 @@ public class TransactionServiceImpl implements ITransactionService{
         transaction.setCreatedAt(LocalDateTime.now());
         transactionRepository.save(transaction);
 
+        //Publicar evento
+        TransactionEvent event = new TransactionEvent();
+        event.setAccountId(transactionRequest.getAccountId());
+        event.setAmount(transactionRequest.getAmount());
+        event.setType(transactionRequest.getType());
+
+        producer.sendTransaction(event);
 
         return mapToResponse(transaction);
     }

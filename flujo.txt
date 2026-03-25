@@ -1,0 +1,9 @@
+Flujo Outbox
+
+DB Transaction (atomic)
+   ├── save transaction
+   └── save outbox event
+          ↓
+    background job
+          ↓
+       Kafka
