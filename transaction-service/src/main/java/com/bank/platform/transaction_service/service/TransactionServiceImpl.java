@@ -1,13 +1,13 @@
 package com.bank.platform.transaction_service.service;
 
-import com.bank.platform.transaction_service.client.IAccountClient;
-import com.bank.platform.transaction_service.dto.AccountResponse;
 import com.bank.platform.transaction_service.dto.TransactionEvent;
 import com.bank.platform.transaction_service.dto.TransactionRequest;
 import com.bank.platform.transaction_service.dto.TransactionResponse;
+import com.bank.platform.transaction_service.entity.OutboxEvent;
 import com.bank.platform.transaction_service.entity.Transaction;
-import com.bank.platform.transaction_service.kafka.TransactionProducer;
 import com.bank.platform.transaction_service.repository.ITransactionRepository;
+import com.bank.platform.transaction_service.repository.IOutboxRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,28 +19,11 @@ import java.util.List;
 public class TransactionServiceImpl implements ITransactionService{
 
     private final ITransactionRepository transactionRepository;
-    private final IAccountClient accountClient;
-    private final TransactionProducer producer;
+    private final IOutboxRepository outboxRepository;
+    private final ObjectMapper objectMapper;
 
     @Override
     public TransactionResponse createTransaction(TransactionRequest transactionRequest) {
-
-        AccountResponse account = accountClient.getAccountById(transactionRequest.getAccountId());
-
-        if(account == null){
-            throw new RuntimeException("account not found");
-        }
-
-        if("WITHDRAW".equalsIgnoreCase(transactionRequest.getType())){
-            if(account.getBalance() < transactionRequest.getAmount()){
-                throw new RuntimeException("amount not enough");
-            }
-            accountClient.updateBalance(transactionRequest.getAccountId(), -transactionRequest.getAmount());
-        }
-
-        if("DEPOSIT".equalsIgnoreCase(transactionRequest.getType())){
-            accountClient.updateBalance(transactionRequest.getAccountId(), transactionRequest.getAmount());
-        }
 
         Transaction  transaction = new Transaction();
         transaction.setAccountId(transactionRequest.getAccountId());
@@ -49,13 +32,27 @@ public class TransactionServiceImpl implements ITransactionService{
         transaction.setCreatedAt(LocalDateTime.now());
         transactionRepository.save(transaction);
 
-        //Publicar evento
+        //Crear evento
         TransactionEvent event = new TransactionEvent();
         event.setAccountId(transactionRequest.getAccountId());
         event.setAmount(transactionRequest.getAmount());
         event.setType(transactionRequest.getType());
 
-        producer.sendTransaction(event);
+        try{
+            String payload = objectMapper.writeValueAsString(event);
+
+            OutboxEvent outbox = OutboxEvent.builder()
+                    .eventType("TransactionCreated")
+                    .payload(payload)
+                    .status("PENDING")
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            outboxRepository.save(outbox);
+
+        } catch (Exception e){
+            throw new RuntimeException("Error serializing event");
+        }
 
         return mapToResponse(transaction);
     }

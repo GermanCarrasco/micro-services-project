@@ -4,6 +4,7 @@ import com.bank.platform.account_service.dto.TransactionEvent;
 import com.bank.platform.account_service.entity.Account;
 import com.bank.platform.account_service.repository.IAccountRepository;
 import com.bank.platform.account_service.service.AccountServiceImpl;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -18,19 +19,27 @@ public class TransactionConsumer {
 
     @KafkaListener(topics = "transaction-topic",
     groupId = "account-group")
-    public void consume(TransactionEvent event) {
+    public void consume(String payload) {
 
-        Account account = accountRepository.findById(event.getAccountId())
-                .orElseThrow(()-> new RuntimeException("Account not found"));
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            TransactionEvent event = mapper.readValue(payload, TransactionEvent.class);
 
-        if("WITHDRAW".equalsIgnoreCase(event.getType())){
-            account.setBalance(account.getBalance()-event.getAmount());
+            Account account = accountRepository.findById(event.getAccountId())
+                    .orElseThrow(() -> new RuntimeException("Account not found"));
+
+            if ("WITHDRAW".equalsIgnoreCase(event.getType())) {
+                account.setBalance(account.getBalance() - event.getAmount());
+            }
+
+            if ("DEPOSIT".equalsIgnoreCase(event.getType())) {
+                account.setBalance(account.getBalance() + event.getAmount());
+            }
+
+            accountRepository.save(account);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error processing event");
         }
-
-        if("DEPOSIT".equalsIgnoreCase(event.getType())){
-            account.setBalance(account.getBalance()+event.getAmount());
-        }
-
-        accountRepository.save(account);
     }
 }
