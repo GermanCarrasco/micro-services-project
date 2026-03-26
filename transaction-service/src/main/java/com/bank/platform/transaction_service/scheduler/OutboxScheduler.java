@@ -24,7 +24,7 @@ public class OutboxScheduler {
     @Scheduled(fixedRate = 5000)
     public void processOutbox(){
 
-        List<OutboxEvent> events = outboxRepository.findByStatus("PENDING");
+        List<OutboxEvent> events = outboxRepository.findTop10ByStatus("PENDING");
 
         //VALIDACIÓN
         if (events == null || events.isEmpty()) {
@@ -33,6 +33,15 @@ public class OutboxScheduler {
         }
 
         for (OutboxEvent event : events) {
+
+            //Intento de bloqueo
+            int updated = outboxRepository.markAsProcessing(event.getId());
+
+            if(updated == 0){
+                //otro proceso lo tomo
+                continue;
+            }
+
             try {
                 kafkaTemplate.send("transactions-topic", event.getPayload());
 
@@ -40,6 +49,11 @@ public class OutboxScheduler {
                 outboxRepository.save(event);
 
             } catch (Exception e) {
+
+                //Vuelve a pending para retry
+                event.setStatus("PENDING");
+                outboxRepository.save(event);
+
                 System.out.println("Error enviando evento ID " + event.getId() + ": " + e.getMessage());
             }
         }

@@ -23,7 +23,7 @@ public class OutboxEvent {
     @Column(columnDefinition = "TEXT")
     private String payload;
 
-    private String status; //PENDING , SENT
+    private String status; //PENDING , PROCESSING ,SENT
 
     private LocalDateTime createdAt;
 }
