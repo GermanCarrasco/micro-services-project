@@ -10,6 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TransactionEvent {
+    private String eventId;
     private Long accountId;
     private String type;
     private Double amount;

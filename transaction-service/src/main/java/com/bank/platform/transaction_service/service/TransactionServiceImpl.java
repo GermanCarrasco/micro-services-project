@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -34,6 +35,7 @@ public class TransactionServiceImpl implements ITransactionService{
 
         //Crear evento
         TransactionEvent event = new TransactionEvent();
+        event.setEventId(UUID.randomUUID().toString());
         event.setAccountId(transactionRequest.getAccountId());
         event.setAmount(transactionRequest.getAmount());
         event.setType(transactionRequest.getType());
