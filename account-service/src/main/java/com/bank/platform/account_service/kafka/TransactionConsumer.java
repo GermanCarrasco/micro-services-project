@@ -73,4 +73,10 @@ public class TransactionConsumer {
             throw new RuntimeException("Error processing event");
         }
     }
+
+    @KafkaListener(topics = "transactions-dlq", groupId = "dlq-group")
+    public void consumeDLQ(String payload) {
+
+        System.out.println("Received DLQ: "+payload);
+    }
 }
