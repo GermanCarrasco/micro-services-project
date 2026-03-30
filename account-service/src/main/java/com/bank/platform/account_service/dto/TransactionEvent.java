@@ -15,4 +15,7 @@ public class TransactionEvent {
     private Long accountId;
     private String type;
     private Double amount;
+    private String step; // DEBIT | CREDIT
+    private Long fromAccountId;
+    private Long toAccountId;
 }

@@ -18,4 +18,6 @@ public interface IOutboxRepository extends JpaRepository<OutboxEvent,Long> {
     @Modifying
     @Query("UPDATE OutboxEvent o SET o.status = 'PROCESSING' WHERE o.id = :id AND o.status = 'PENDING'")
     int markAsProcessing(@Param("id") Long id);
+
+    List<OutboxEvent> findByStatus(String status);
 }

@@ -26,7 +26,6 @@ public class OutboxScheduler {
 
         List<OutboxEvent> events = outboxRepository.findTop10ByStatus("PENDING");
 
-        //VALIDACIÓN
         if (events == null || events.isEmpty()) {
             System.out.println("No hay eventos pendientes en outbox");
             return;
@@ -34,12 +33,11 @@ public class OutboxScheduler {
 
         for (OutboxEvent event : events) {
 
-            //Intento de bloqueo
+            // bloqueo optimista
             int updated = outboxRepository.markAsProcessing(event.getId());
 
             if(updated == 0){
-                //otro proceso lo tomo
-                continue;
+                continue; // otro nodo lo tomó
             }
 
             try {
@@ -50,12 +48,15 @@ public class OutboxScheduler {
 
             } catch (Exception e) {
 
-                //Vuelve a pending para retry
+                // retry
                 event.setStatus("PENDING");
                 outboxRepository.save(event);
 
-                System.out.println("Error enviando evento ID " + event.getId() + ": " + e.getMessage());
+                System.out.println("Error enviando evento ID "
+                        + event.getId() + ": " + e.getMessage());
             }
-        }
+
     }
+    }
+
 }

@@ -18,6 +18,9 @@ public class OutboxEvent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    //ESTE ES CLAVE PARA IDMPOTENCIA Y TRAZABILIDAD
+    private String eventId;
+
     private String eventType;
 
     @Column(columnDefinition = "TEXT")

@@ -17,11 +17,10 @@ public class FailedEvent {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @Column(columnDefinition = "TEXT")
     private String payload;
-
     private String errorMessage;
-
     private LocalDateTime createdAt;
+    private String eventId;
+
 }

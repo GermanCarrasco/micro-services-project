@@ -2,6 +2,7 @@ package com.bank.platform.transaction_service.controller;
 
 import com.bank.platform.transaction_service.dto.TransactionRequest;
 import com.bank.platform.transaction_service.dto.TransactionResponse;
+import com.bank.platform.transaction_service.dto.TransferRequest;
 import com.bank.platform.transaction_service.service.ITransactionService;
 import com.bank.platform.transaction_service.service.TransactionServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,5 +29,11 @@ public class TransactionController {
     @GetMapping("/account/{accountId}")
     public ResponseEntity<List<TransactionResponse>> getByAccount(@PathVariable Long accountId) {
         return ResponseEntity.ok(transactionService.getByAccount(accountId));
+    }
+
+    @PostMapping("/transfer")
+    public ResponseEntity<String> transfer(@RequestBody TransferRequest request){
+        transactionService.transfer(request);
+        return ResponseEntity.ok("transfer initiated");
     }
 }

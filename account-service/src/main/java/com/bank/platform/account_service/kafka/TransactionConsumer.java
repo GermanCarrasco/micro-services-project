@@ -18,6 +18,7 @@ public class TransactionConsumer {
 
     private final IAccountRepository accountRepository;
     private final IProcessedEventRepository processedEventRepository;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public TransactionConsumer(IAccountRepository accountRepository, IProcessedEventRepository processedEventRepository) {
         this.accountRepository = accountRepository;
@@ -29,7 +30,6 @@ public class TransactionConsumer {
     public void consume(String payload) {
 
         try {
-            ObjectMapper mapper = new ObjectMapper();
             TransactionEvent event = mapper.readValue(payload, TransactionEvent.class);
 
             //1. Validar si ya se proceso
@@ -38,23 +38,34 @@ public class TransactionConsumer {
                 return;
             }
 
-            Account account = accountRepository.findById(event.getAccountId())
-                    .orElseThrow(() -> new RuntimeException("Account not found"));
 
-            //2. Validar balance
-            if("WITHDRAW".equalsIgnoreCase(event.getType())){
-                if(account.getBalance() < event.getAmount()){
-                    throw new RuntimeException("Insuficiente funds");
+            // PASO 1: DEBIT
+            if ("DEBIT".equalsIgnoreCase(event.getStep())) {
+
+                Account account = accountRepository.findById(event.getFromAccountId())
+                        .orElseThrow(() -> new RuntimeException("Account not found"));
+
+                if (account.getBalance() < event.getAmount()) {
+                    throw new RuntimeException("Insufficient funds");
                 }
+
                 account.setBalance(account.getBalance() - event.getAmount());
-            }
+                accountRepository.save(account);
 
+                System.out.println("DEBIT realizado");
 
-            if ("DEPOSIT".equalsIgnoreCase(event.getType())) {
+            // PASO 2: CREDIT
+            } else if ("CREDIT".equalsIgnoreCase(event.getStep())) {
+
+                Account account = accountRepository.findById(event.getToAccountId())
+                        .orElseThrow(() -> new RuntimeException("Account not found"));
+
                 account.setBalance(account.getBalance() + event.getAmount());
+                accountRepository.save(account);
+
+                System.out.println("CREDIT realizado");
             }
 
-            accountRepository.save(account);
 
             //3. Registrar como procesado
             ProcessedEvent processedEvent = ProcessedEvent.builder()
