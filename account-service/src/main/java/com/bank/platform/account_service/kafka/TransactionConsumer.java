@@ -19,10 +19,13 @@ public class TransactionConsumer {
     private final IAccountRepository accountRepository;
     private final IProcessedEventRepository processedEventRepository;
     private final ObjectMapper mapper = new ObjectMapper();
+    private final AccountProducer accountProducer;
 
-    public TransactionConsumer(IAccountRepository accountRepository, IProcessedEventRepository processedEventRepository) {
+
+    public TransactionConsumer(IAccountRepository accountRepository, IProcessedEventRepository processedEventRepository, AccountProducer accountProducer) {
         this.accountRepository = accountRepository;
         this.processedEventRepository = processedEventRepository;
+        this.accountProducer = accountProducer;
     }
 
     @KafkaListener(topics = "transaction-topic",
@@ -54,22 +57,65 @@ public class TransactionConsumer {
 
                 System.out.println("DEBIT realizado");
 
+                //Crear event CREDIT
+                TransactionEvent creditEvent = TransactionEvent.builder()
+                        .eventId(event.getEventId()) //mismo ID , esto es clave en SAGA
+                        .step("CREDIT")
+                        .amount(event.getAmount())
+                        .fromAccountId(event.getFromAccountId())
+                        .toAccountId(event.getToAccountId())
+                        .build();
+
+                accountProducer.sendEvent(creditEvent);
+
             // PASO 2: CREDIT
             } else if ("CREDIT".equalsIgnoreCase(event.getStep())) {
 
-                Account account = accountRepository.findById(event.getToAccountId())
+
+                try {
+
+                    Account account = accountRepository.findById(event.getToAccountId())
+                            .orElseThrow(() -> new RuntimeException("Account not found"));
+
+                    account.setBalance(account.getBalance() + event.getAmount());
+                    accountRepository.save(account);
+
+                    System.out.println("CREDIT realizado");
+
+                } catch (Exception e) {
+
+                    System.out.println("Error on CREDIT -> Rollback Bigining");
+
+                    //Crear evento de rollback
+                    TransactionEvent rollbackEnvent = TransactionEvent.builder()
+                            .eventId(event.getEventId()+"-ROLLBACK")
+                            .step("ROLLBACK")
+                            .amount(event.getAmount())
+                            .fromAccountId(event.getFromAccountId())
+                            .toAccountId(event.getToAccountId())
+                            .status("FAILED")
+                            .reason(e.getMessage())
+                            .build();
+
+                    accountProducer.sendEvent(rollbackEnvent);
+                }
+
+            } else if ("ROLLBACK".equalsIgnoreCase(event.getStep())) {
+
+                Account account = accountRepository.findById(event.getFromAccountId())
                         .orElseThrow(() -> new RuntimeException("Account not found"));
 
                 account.setBalance(account.getBalance() + event.getAmount());
                 accountRepository.save(account);
 
-                System.out.println("CREDIT realizado");
+                System.out.println("ROLLBACK realizado (dinero retornado)");
+
             }
 
 
             //3. Registrar como procesado
             ProcessedEvent processedEvent = ProcessedEvent.builder()
-                    .eventId(event.getEventId())
+                    .eventId(event.getEventId() +"-CREDIT")
                     .processedAt(LocalDateTime.now())
                     .build();
             try{

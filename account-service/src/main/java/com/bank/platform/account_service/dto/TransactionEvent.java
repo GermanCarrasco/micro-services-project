@@ -1,15 +1,13 @@
 package com.bank.platform.account_service.dto;
 
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class TransactionEvent {
     private String eventId;
     private Long accountId;
@@ -18,4 +16,6 @@ public class TransactionEvent {
     private String step; // DEBIT | CREDIT
     private Long fromAccountId;
     private Long toAccountId;
+    private String status; //SUCCESS | FAILDE
+    private String reason; //opcional (error)
 }
