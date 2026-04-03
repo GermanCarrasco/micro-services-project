@@ -32,6 +32,8 @@ public class DlqConsumer {
                 .payload(payload)
                 .errorMessage("Error en procesamiento (ver logs)")
                 .createdAt(LocalDateTime.now())
+                .retryCount(0)
+                .status("PENDING")
                 .build();
 
         iFailedEventRepository.save(failedEvent);

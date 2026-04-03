@@ -6,6 +6,7 @@ import com.bank.platform.account_service.entity.ProcessedEvent;
 import com.bank.platform.account_service.repository.IAccountRepository;
 import com.bank.platform.account_service.repository.IProcessedEventRepository;
 import com.bank.platform.account_service.service.AccountServiceImpl;
+import com.bank.platform.account_service.service.OutboxServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -20,12 +21,14 @@ public class TransactionConsumer {
     private final IProcessedEventRepository processedEventRepository;
     private final ObjectMapper mapper = new ObjectMapper();
     private final AccountProducer accountProducer;
+    private final OutboxServiceImpl  outboxService;
 
 
-    public TransactionConsumer(IAccountRepository accountRepository, IProcessedEventRepository processedEventRepository, AccountProducer accountProducer) {
+    public TransactionConsumer(IAccountRepository accountRepository, IProcessedEventRepository processedEventRepository, AccountProducer accountProducer, OutboxServiceImpl outboxService) {
         this.accountRepository = accountRepository;
         this.processedEventRepository = processedEventRepository;
         this.accountProducer = accountProducer;
+        this.outboxService = outboxService;
     }
 
     @KafkaListener(topics = "transaction-topic",
@@ -66,7 +69,11 @@ public class TransactionConsumer {
                         .toAccountId(event.getToAccountId())
                         .build();
 
-                accountProducer.sendEvent(creditEvent);
+                outboxService.saveEvent(
+                        creditEvent,
+                        "CREDIT",
+                        creditEvent.getEventId()
+                );
 
             // PASO 2: CREDIT
             } else if ("CREDIT".equalsIgnoreCase(event.getStep())) {
@@ -97,7 +104,11 @@ public class TransactionConsumer {
                             .reason(e.getMessage())
                             .build();
 
-                    accountProducer.sendEvent(rollbackEnvent);
+                    outboxService.saveEvent(
+                            rollbackEnvent,
+                            "ROLLBACK",
+                            rollbackEnvent.getEventId()
+                    );
                 }
 
             } else if ("ROLLBACK".equalsIgnoreCase(event.getStep())) {
@@ -115,7 +126,7 @@ public class TransactionConsumer {
 
             //3. Registrar como procesado
             ProcessedEvent processedEvent = ProcessedEvent.builder()
-                    .eventId(event.getEventId() +"-CREDIT")
+                    .eventId(event.getEventId())
                     .processedAt(LocalDateTime.now())
                     .build();
             try{

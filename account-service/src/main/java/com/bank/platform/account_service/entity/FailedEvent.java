@@ -22,5 +22,7 @@ public class FailedEvent {
     private String errorMessage;
     private LocalDateTime createdAt;
     private String eventId;
+    private int retryCount;
+    private String status;
 
 }
