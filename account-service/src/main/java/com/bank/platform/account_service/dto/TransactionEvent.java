@@ -18,5 +18,5 @@ public class TransactionEvent {
     private Long toAccountId;
     private String status; //SUCCESS | FAILDE
     private String reason; //opcional (error)
-    private String correlationId; //lo agregue el 3-4-2026 fue lo ultimo que hice, continuar ahi
+    private String correlationId;
 }

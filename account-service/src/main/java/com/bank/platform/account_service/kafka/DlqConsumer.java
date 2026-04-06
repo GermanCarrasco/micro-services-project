@@ -25,7 +25,10 @@ public class DlqConsumer {
         ObjectMapper mapper = new ObjectMapper();
         TransactionEvent event = mapper.readValue(payload, TransactionEvent.class);
 
-        System.out.println("Evento en DLQ: " + payload);
+        System.out.println(
+                "DLQ | CID: " + event.getCorrelationId() +
+                        " | EVENT: " + event.getEventId()
+        );
 
         FailedEvent failedEvent = FailedEvent.builder()
                 .eventId(event.getEventId())
