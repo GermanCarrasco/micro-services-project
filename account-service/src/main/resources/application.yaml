@@ -14,13 +14,13 @@ spring:
     listener:
       ack-mode: record
 
-  logging:
-    level:
-      root: INFO
-    pattern:
-      console: >
-        {"timestamp":"%d{yyyy-MM-dd HH:mm:ss}",
-         "level":"%p",
-         "service":"account-service",
-         "correlationId":"%X{correlationId}",
-         "message":"%m"}
+logging:
+  level:
+    root: INFO
+  pattern:
+    console: >
+      {"timestamp":"%d{yyyy-MM-dd HH:mm:ss}",
+        "level":"%p",
+        "service":"account-service",
+        "correlationId":"%X{correlationId}",
+        "message":"%m"}
