@@ -24,3 +24,14 @@ logging:
         "service":"account-service",
         "correlationId":"%X{correlationId}",
         "message":"%m"}
+
+  management:
+    tracing:
+      sampling:
+        probability: 1.0
+
+
+  otel:
+    exporter:
+      otlp:
+        endpoint: http://localhost:4318

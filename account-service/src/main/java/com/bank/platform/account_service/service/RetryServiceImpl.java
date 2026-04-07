@@ -4,6 +4,7 @@ import com.bank.platform.account_service.dto.TransactionEvent;
 import com.bank.platform.account_service.entity.FailedEvent;
 import com.bank.platform.account_service.repository.IFailedEventRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.opentelemetry.api.trace.Span;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,8 @@ public class RetryServiceImpl implements IRetryService{
                         event.getPayload(),
                         TransactionEvent.class
                 );
+
+                Span.current().setAttribute("correlationId",events.getCorrelationId());
 
                 System.out.print(
                         "RETRY | CID: " + events.getCorrelationId() +

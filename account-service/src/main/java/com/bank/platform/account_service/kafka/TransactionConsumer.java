@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import java.time.LocalDateTime;
+import io.opentelemetry.api.trace.Span;
 
 @Component
 public class TransactionConsumer {
@@ -44,6 +45,11 @@ public class TransactionConsumer {
         try {
 
             TransactionEvent event = mapper.readValue(payload, TransactionEvent.class);
+
+            Span currentSpan = Span.current();
+            currentSpan.setAttribute("correlationId",event.getCorrelationId());
+            currentSpan.setAttribute("eventId",event.getEventId());
+            currentSpan.setAttribute("step",event.getStep());
 
             MDC.put("correlationId", event.getCorrelationId()); //Con esto puedo acceder en la configuracion del .yml
 
