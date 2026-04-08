@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import java.time.LocalDateTime;
 import io.opentelemetry.api.trace.Span;
+import io.micrometer.core.instrument.MeterRegistry;
 
 @Component
 public class TransactionConsumer {
@@ -28,13 +29,15 @@ public class TransactionConsumer {
     private final ObjectMapper mapper = new ObjectMapper();
     private final AccountProducer accountProducer;
     private final OutboxServiceImpl  outboxService;
+    private final MeterRegistry meterRegistry;
 
 
-    public TransactionConsumer(IAccountRepository accountRepository, IProcessedEventRepository processedEventRepository, AccountProducer accountProducer, OutboxServiceImpl outboxService) {
+    public TransactionConsumer(IAccountRepository accountRepository, IProcessedEventRepository processedEventRepository, AccountProducer accountProducer, OutboxServiceImpl outboxService, MeterRegistry meterRegistry) {
         this.accountRepository = accountRepository;
         this.processedEventRepository = processedEventRepository;
         this.accountProducer = accountProducer;
         this.outboxService = outboxService;
+        this.meterRegistry = meterRegistry;
     }
 
     @KafkaListener(topics = "transaction-topic",
@@ -42,14 +45,15 @@ public class TransactionConsumer {
     public void consume(String payload) {
 
 
+        TransactionEvent event = null;
         try {
 
-            TransactionEvent event = mapper.readValue(payload, TransactionEvent.class);
+            event = mapper.readValue(payload, TransactionEvent.class);
 
             Span currentSpan = Span.current();
-            currentSpan.setAttribute("correlationId",event.getCorrelationId());
-            currentSpan.setAttribute("eventId",event.getEventId());
-            currentSpan.setAttribute("step",event.getStep());
+            currentSpan.setAttribute("correlationId", event.getCorrelationId());
+            currentSpan.setAttribute("eventId", event.getEventId());
+            currentSpan.setAttribute("step", event.getStep());
 
             MDC.put("correlationId", event.getCorrelationId()); //Con esto puedo acceder en la configuracion del .yml
 
@@ -60,8 +64,8 @@ public class TransactionConsumer {
             );
 
             //1. Validar si ya se proceso
-            if(processedEventRepository.existsByEventId(event.getEventId())){
-                System.out.println("Evento duplicado ignorado: "+event.getEventId());
+            if (processedEventRepository.existsByEventId(event.getEventId())) {
+                System.out.println("Evento duplicado ignorado: " + event.getEventId());
                 return;
             }
 
@@ -85,7 +89,7 @@ public class TransactionConsumer {
                         event.getCorrelationId(),
                         event.getEventId(),
                         event.getStep()
-                        ,"DEBIT realizado");
+                        , "DEBIT realizado");
 
                 //Crear event CREDIT
                 TransactionEvent creditEvent = TransactionEvent.builder()
@@ -103,7 +107,7 @@ public class TransactionConsumer {
                         creditEvent.getEventId()
                 );
 
-            // PASO 2: CREDIT
+                // PASO 2: CREDIT
             } else if ("CREDIT".equalsIgnoreCase(event.getStep())) {
 
 
@@ -130,7 +134,7 @@ public class TransactionConsumer {
 
                     //Crear evento de rollback
                     TransactionEvent rollbackEnvent = TransactionEvent.builder()
-                            .eventId(event.getEventId()+"-ROLLBACK")
+                            .eventId(event.getEventId() + "-ROLLBACK")
                             .correlationId(event.getCorrelationId())
                             .step("ROLLBACK")
                             .amount(event.getAmount())
@@ -171,16 +175,21 @@ public class TransactionConsumer {
                     .eventId(event.getEventId())
                     .processedAt(LocalDateTime.now())
                     .build();
-            try{
+
+            meterRegistry.counter("transactions.processed", "step", event.getStep()).increment();
+
+            try {
                 processedEventRepository.save(processedEvent);
-            } catch (DataIntegrityViolationException e){
+            } catch (DataIntegrityViolationException e) {
                 //Ya existe
                 return;
             }
 
 
-
         } catch (Exception e) {
+            meterRegistry.counter("transactions.failed",
+                    "step", event.getStep()
+            ).increment();
             throw new RuntimeException("Error processing event");
         }
 
@@ -191,6 +200,8 @@ public class TransactionConsumer {
     public void consumeDLQ(String payload) throws JsonProcessingException {
 
         TransactionEvent event = mapper.readValue(payload, TransactionEvent.class);
+
+        meterRegistry.counter("transactions.dlq").increment();
 
         log.info(
                 "CID={} EVENT={} STEP={} MESSAGE={}",

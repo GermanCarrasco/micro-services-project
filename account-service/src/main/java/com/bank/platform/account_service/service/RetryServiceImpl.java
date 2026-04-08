@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import io.micrometer.core.instrument.MeterRegistry;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +18,7 @@ public class RetryServiceImpl implements IRetryService{
     private final IFailedEventRepository failedEventRepository;
     private final KafkaTemplate<String,String>  kafkaTemplate;
     private final ObjectMapper mapper = new ObjectMapper();
+    private final MeterRegistry meterRegistry;
 
     @Override
     public void retryFailedEvents() {
@@ -43,6 +45,8 @@ public class RetryServiceImpl implements IRetryService{
 
                 event.setStatus("SUCCESS");
                 failedEventRepository.save(event);
+
+                meterRegistry.counter("transaction-retry").increment();
 
                 System.out.println("Retry Success");
 
