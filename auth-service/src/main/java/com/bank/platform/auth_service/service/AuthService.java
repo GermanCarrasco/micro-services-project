@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 public class AuthService {
     private final IUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
+    private final JwtGeneratorService jwtGeneratorService;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final RefreshTokenService refreshTokenService;
@@ -50,7 +50,7 @@ public class AuthService {
         UserDetails userDetails =
                 userDetailsService.loadUserByUsername(user.getUsername());
 
-        String accessToken = jwtService.generateToken(userDetails);
+        String accessToken = jwtGeneratorService.generateToken(userDetails);
 
         String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
 

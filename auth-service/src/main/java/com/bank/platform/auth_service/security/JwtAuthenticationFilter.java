@@ -1,6 +1,6 @@
 package com.bank.platform.auth_service.security;
 
-import com.bank.platform.auth_service.service.JwtService;
+import com.bank.platform.auth_service.service.JwtGeneratorService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -20,7 +19,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtService  jwtService;
+    private final JwtGeneratorService jwtGeneratorService;
     private final CustomUserDetailsService  userDetailsService;
 
     @Override
@@ -40,7 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         jwt = authHeader.substring(7);
 
         // Extraer username del token
-        username = jwtService.extractUsername(jwt);
+        username = jwtGeneratorService.extractUsername(jwt);
 
         // Si el usuario existe y no está autenticado aún
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -48,7 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
             // Aquí podrías validar token también
-            if (jwtService.isTokenValid(jwt, userDetails)) {
+            if (jwtGeneratorService.isTokenValid(jwt, userDetails)) {
 
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(

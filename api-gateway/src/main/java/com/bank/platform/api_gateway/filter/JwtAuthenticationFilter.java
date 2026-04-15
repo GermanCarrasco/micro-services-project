@@ -1,9 +1,12 @@
 package com.bank.platform.api_gateway.filter;
 
-import com.bank.platform.api_gateway.util.JwtUtil;
+
+import com.bank.platform.security.JwtValidatorService;
 import io.jsonwebtoken.Claims;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cloud.gateway.filter.GatewayFilter;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -17,7 +20,15 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
-    private final JwtUtil jwtUtil;
+    @Value("${jwt.secret}")
+    private String secret;
+
+    private JwtValidatorService jwtValidatorService;
+
+    @PostConstruct
+    public void init(){
+        this.jwtValidatorService = new JwtValidatorService(secret);
+    }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -41,7 +52,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         String token = authHeader.substring(7);
 
         try {
-            Claims claims = jwtUtil.validateToken(token);
+            Claims claims = jwtValidatorService.extractAllClaims(token);
 
             //Extraer data
             String userName = claims.getSubject();

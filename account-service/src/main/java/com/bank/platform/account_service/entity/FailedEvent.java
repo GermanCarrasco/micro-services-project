@@ -24,6 +24,6 @@ public class FailedEvent {
     private String eventId;
     private int retryCount;
     private String status;
-    private Str
+    private LocalDateTime lastAttemptAt;
 
 }

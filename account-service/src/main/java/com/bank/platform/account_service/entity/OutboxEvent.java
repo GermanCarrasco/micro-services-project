@@ -1,10 +1,7 @@
 package com.bank.platform.account_service.entity;
 
 
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -15,6 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 @Getter
 @Setter
+@Table(name = "outbox_event ")
 public class OutboxEvent {
 
     @Id

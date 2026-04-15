@@ -8,8 +8,9 @@ import com.bank.platform.auth_service.entities.RefreshToken;
 import com.bank.platform.auth_service.entities.User;
 import com.bank.platform.auth_service.repository.IRefreshTokenRepository;
 import com.bank.platform.auth_service.service.AuthService;
-import com.bank.platform.auth_service.service.JwtService;
+import com.bank.platform.auth_service.service.JwtGeneratorService;
 import com.bank.platform.auth_service.service.RefreshTokenService;
+import com.bank.platform.security.JwtValidatorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -27,7 +28,8 @@ public class AuthController {
     private final IRefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenService refreshTokenService;
     private final UserDetailsService userDetailsService;
-    private final JwtService jwtService;
+//    private final JwtValidatorService jwtValidatorService;
+    private final JwtGeneratorService jwtGeneratorService;
 
     @PostMapping("/register")
     public void register(@RequestBody RegisterRequest user){
@@ -53,7 +55,7 @@ public class AuthController {
         UserDetails userDetails =
                 userDetailsService.loadUserByUsername(user.getUsername());
 
-        String newAccessToken = jwtService.generateToken(userDetails);
+        String newAccessToken = jwtGeneratorService.generateToken(userDetails);
 
         return new AuthResponse(newAccessToken,refreshRequest.getRefreshToken());
     }
