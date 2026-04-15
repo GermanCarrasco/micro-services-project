@@ -51,24 +51,28 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
         String token = authHeader.substring(7);
 
+        // VALIDAR TOKEN
+        if (!jwtValidatorService.isTokenValid(token)) {
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
+        }
+
         try {
-            Claims claims = jwtValidatorService.extractAllClaims(token);
+            // EXTRAER DATA DESDE COMMON
+            String userName = jwtValidatorService.extractUsername(token);
 
-            //Extraer data
-            String userName = claims.getSubject();
-            String userId = claims.get("userId").toString();
-            String role = claims.get("role").toString();
+            String role = jwtValidatorService.extractRole(token);
+            String userId = jwtValidatorService.extractUserId(token).toString();
 
-            //Agregar Headers a la request
             ServerHttpRequest mutateRequest = exchange.getRequest().mutate()
-                    .header("X-User-Username",userName)
-                    .header("X-User-Role",role)
-                    .header("X-User-Id",userId).build();
+                    .header("X-User-Username", userName)
+                    .header("X-User-Role", role)
+                    .header("X-User-Id", userId)
+                    .build();
 
             return chain.filter(exchange.mutate().request(mutateRequest).build());
 
         } catch (Exception e) {
-
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }

@@ -1,8 +1,12 @@
 package com.bank.platform.auth_service.service;
 
 
+import com.bank.platform.security.JwtValidatorService;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -12,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class JwtGeneratorService {
 
     @Value("${jwt.secret}")
@@ -19,6 +24,13 @@ public class JwtGeneratorService {
 
     @Value("${jwt.expiration}")
     private long expiration;
+
+    private JwtValidatorService jwtValidatorService;
+
+    @PostConstruct
+    public void init(){
+        this.jwtValidatorService = new JwtValidatorService(secret);
+    }
 
     // Generar token
     public String generateToken(UserDetails userDetails) {
@@ -35,10 +47,22 @@ public class JwtGeneratorService {
                 .compact();
     }
 
-//    // Extraer username
-//    public String extractUsername(String token) {
-//        return extractClaim(token, Claims::getSubject);
-//    }
+    // Extraer username
+    public String extractUsername(String token) {
+        return jwtValidatorService.extractClaim(token, Claims::getSubject);
+    }
+
+    // Validar token
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+
+        final String username = extractUsername(token);
+
+        return username.equals(userDetails.getUsername()) && !jwtValidatorService.isTokenExpired(token);
+    }
+}
+
+
+
 //
 //    // Método genérico para extraer cualquier claim
 //    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -68,11 +92,3 @@ public class JwtGeneratorService {
 //        return extractExpiration(token).before(new Date());
 //    }
 //
-//    // Validar token
-//    public boolean isTokenValid(String token, UserDetails userDetails) {
-//
-//        final String username = extractUsername(token);
-//
-//        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
-//    }
-}

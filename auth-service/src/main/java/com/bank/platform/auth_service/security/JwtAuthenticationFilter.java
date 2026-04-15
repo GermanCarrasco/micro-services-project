@@ -1,11 +1,14 @@
 package com.bank.platform.auth_service.security;
 
 import com.bank.platform.auth_service.service.JwtGeneratorService;
+import com.bank.platform.security.JwtValidatorService;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,8 +22,17 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    @Value("${jwt.secret}")
+    private String secret;
+
     private final JwtGeneratorService jwtGeneratorService;
+    private JwtValidatorService  jwtValidatorService;
     private final CustomUserDetailsService  userDetailsService;
+
+    @PostConstruct
+    public void init(){
+        this.jwtValidatorService = new JwtValidatorService(secret);
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -39,7 +51,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         jwt = authHeader.substring(7);
 
         // Extraer username del token
-        username = jwtGeneratorService.extractUsername(jwt);
+        username = jwtValidatorService.extractUsername(jwt);
 
         // Si el usuario existe y no está autenticado aún
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {

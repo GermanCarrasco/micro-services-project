@@ -49,4 +49,13 @@ public class JwtValidatorService {
     public boolean isTokenValid(String token) {
         return !isTokenExpired(token);
     }
+
+    public String extractRole(String token) {
+        return extractAllClaims(token).get("role").toString();
+    }
+
+    public Long extractUserId(String token) {
+        Object userId = extractAllClaims(token).get("userId");
+        return userId != null ? Long.parseLong(userId.toString()) : null;
+    }
 }
