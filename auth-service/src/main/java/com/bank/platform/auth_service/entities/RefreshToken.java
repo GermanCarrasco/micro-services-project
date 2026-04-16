@@ -11,6 +11,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(name = "RefreshToken",schema = "auth")
 public class RefreshToken {
 
     @Id
