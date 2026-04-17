@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 @Entity
-@Table(name = "processed_events")
+@Table(name = "processed_events",schema = "account")
 public class ProcessedEvent {
 
     @Id

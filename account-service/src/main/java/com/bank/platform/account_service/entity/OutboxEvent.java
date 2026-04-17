@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 @Getter
 @Setter
-@Table(name = "outbox_event ")
+@Table(name = "outbox_event",schema = "account")
 public class OutboxEvent {
 
     @Id

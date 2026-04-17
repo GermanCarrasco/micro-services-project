@@ -3,7 +3,7 @@ spring:
     name: account-service
 
   config:
-    import: optional:configserver:http://localhost:8080
+    import: configserver:http://localhost:8080
 
   kafka:
     consumer:
