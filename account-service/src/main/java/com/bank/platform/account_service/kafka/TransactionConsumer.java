@@ -16,8 +16,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import java.time.LocalDateTime;
-import io.opentelemetry.api.trace.Span;
+//import io.opentelemetry.api.trace.Span;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.tracing.Tracer;
+import io.micrometer.tracing.Span;
 
 @Component
 public class TransactionConsumer {
@@ -30,14 +32,17 @@ public class TransactionConsumer {
     private final AccountProducer accountProducer;
     private final OutboxServiceImpl  outboxService;
     private final MeterRegistry meterRegistry;
+    private final Tracer tracer;
 
-
-    public TransactionConsumer(IAccountRepository accountRepository, IProcessedEventRepository processedEventRepository, AccountProducer accountProducer, OutboxServiceImpl outboxService, MeterRegistry meterRegistry) {
+    public TransactionConsumer(IAccountRepository accountRepository, IProcessedEventRepository processedEventRepository,
+                               AccountProducer accountProducer, OutboxServiceImpl outboxService, MeterRegistry meterRegistry,
+                               Tracer tracer) {
         this.accountRepository = accountRepository;
         this.processedEventRepository = processedEventRepository;
         this.accountProducer = accountProducer;
         this.outboxService = outboxService;
         this.meterRegistry = meterRegistry;
+        this.tracer = tracer;
     }
 
     @KafkaListener(topics = "transaction-topic",
@@ -50,10 +55,10 @@ public class TransactionConsumer {
 
             event = mapper.readValue(payload, TransactionEvent.class);
 
-            Span currentSpan = Span.current();
-            currentSpan.setAttribute("correlationId", event.getCorrelationId());
-            currentSpan.setAttribute("eventId", event.getEventId());
-            currentSpan.setAttribute("step", event.getStep());
+            Span currentSpan = tracer.currentSpan();
+            currentSpan.tag("correlationId", event.getCorrelationId());
+            currentSpan.tag("eventId", event.getEventId());
+            currentSpan.tag("step", event.getStep());
 
             MDC.put("correlationId", event.getCorrelationId()); //Con esto puedo acceder en la configuracion del .yml
 

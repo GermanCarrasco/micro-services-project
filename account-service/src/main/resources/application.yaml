@@ -43,3 +43,8 @@ logging:
     exporter:
       otlp:
         endpoint: http://localhost:4318
+
+#eureka:
+#  client:
+#    service-url:
+#      defaultZone: http://localhost:8761/eureka/
