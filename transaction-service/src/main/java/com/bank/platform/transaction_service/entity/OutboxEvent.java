@@ -6,7 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name="outbox")
+@Table(name="outbox",schema="transaction")
 @Getter
 @Setter
 @AllArgsConstructor
