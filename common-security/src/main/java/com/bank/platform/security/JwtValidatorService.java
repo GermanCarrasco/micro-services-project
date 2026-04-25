@@ -54,8 +54,8 @@ public class JwtValidatorService {
         return extractAllClaims(token).get("role").toString();
     }
 
-    public Long extractUserId(String token) {
-        Object userId = extractAllClaims(token).get("userId");
-        return userId != null ? Long.parseLong(userId.toString()) : null;
-    }
+//    public Long extractUserId(String token) {
+//        Object userId = extractAllClaims(token).get("userId");
+//        return userId != null ? Long.parseLong(userId.toString()) : null;
+//    }
 }
