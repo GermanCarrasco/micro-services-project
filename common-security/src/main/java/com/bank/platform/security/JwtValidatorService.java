@@ -42,7 +42,12 @@ public class JwtValidatorService {
 
     // Validar expiración
     public boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        try{
+            return extractExpiration(token).before(new Date());
+        } catch (Exception e){
+            System.out.println("Error al validar si el token expiro: " + e.getMessage());
+            return false;
+        }
     }
 
     // Validación simple (sin DB)

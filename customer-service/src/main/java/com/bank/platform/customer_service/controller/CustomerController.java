@@ -5,12 +5,13 @@ import com.bank.platform.customer_service.dto.CustomerResponse;
 import com.bank.platform.customer_service.entity.Customer;
 import com.bank.platform.customer_service.service.CustomerServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/customer")
+@RequestMapping("/customers")
 @RequiredArgsConstructor
 public class CustomerController {
 
@@ -18,7 +19,8 @@ public class CustomerController {
 
     @PostMapping
     public ResponseEntity<CustomerResponse> create(@RequestBody CustomerRequest request) {
-        return ResponseEntity.ok(customerService.create(request));
+        CustomerResponse response = customerService.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
