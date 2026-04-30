@@ -45,7 +45,7 @@ public class TransactionConsumer {
         this.tracer = tracer;
     }
 
-    @KafkaListener(topics = "transaction-topic",
+    @KafkaListener(topics = "transactions-topic",
     groupId = "account-group")
     public void consume(String payload) {
 
@@ -55,31 +55,31 @@ public class TransactionConsumer {
 
             event = mapper.readValue(payload, TransactionEvent.class);
 
-            Span currentSpan = tracer.currentSpan();
-            currentSpan.tag("correlationId", event.getCorrelationId());
-            currentSpan.tag("eventId", event.getEventId());
-            currentSpan.tag("step", event.getStep());
+//            Span currentSpan = tracer.currentSpan();
+////            currentSpan.tag("correlationId", event.getCorrelationId());
+////            currentSpan.tag("eventId", event.getEventId());
+//            currentSpan.tag("step", event.getStep());
 
-            MDC.put("correlationId", event.getCorrelationId()); //Con esto puedo acceder en la configuracion del .yml
+//            MDC.put("correlationId", event.getCorrelationId()); //Con esto puedo acceder en la configuracion del .yml
 
             System.out.println(
-                    "CID: " + event.getCorrelationId() +
+//                    "CID: " + event.getCorrelationId() +
                             " | STEP: " + event.getStep() +
                             " | EVENT: " + event.getEventId()
             );
 
             //1. Validar si ya se proceso
-            if (processedEventRepository.existsByEventId(event.getEventId())) {
-                System.out.println("Evento duplicado ignorado: " + event.getEventId());
-                return;
-            }
+//            if (processedEventRepository.existsByEventId(event.getEventId())) {
+//                System.out.println("Evento duplicado ignorado: " + event.getEventId());
+//                return;
+//            }
 
 
             // PASO 1: DEBIT
             if ("DEBIT".equalsIgnoreCase(event.getStep())) {
 
-                Account account = accountRepository.findById(event.getFromAccountId())
-                        .orElseThrow(() -> new RuntimeException("Account not found"));
+                Account account = accountRepository.findByAccountNumber(event.getFromAccountId());
+//                        .orElseThrow(() -> new RuntimeException("Account not found"));
 
                 if (account.getBalance() < event.getAmount()) {
                     throw new RuntimeException("Insufficient funds");
@@ -91,7 +91,7 @@ public class TransactionConsumer {
                 System.out.println("DEBIT realizado");
                 log.info(
                         "CID={} EVENT={} STEP={} MESSAGE={}",
-                        event.getCorrelationId(),
+//                        event.getCorrelationId(),
                         event.getEventId(),
                         event.getStep()
                         , "DEBIT realizado");
@@ -99,7 +99,7 @@ public class TransactionConsumer {
                 //Crear event CREDIT
                 TransactionEvent creditEvent = TransactionEvent.builder()
                         .eventId(event.getEventId()) //mismo ID , esto es clave en SAGA
-                        .correlationId(event.getCorrelationId())
+//                        .correlationId(event.getCorrelationId())
                         .step("CREDIT")
                         .amount(event.getAmount())
                         .fromAccountId(event.getFromAccountId())
@@ -118,15 +118,15 @@ public class TransactionConsumer {
 
                 try {
 
-                    Account account = accountRepository.findById(event.getToAccountId())
-                            .orElseThrow(() -> new RuntimeException("Account not found"));
+                    Account account = accountRepository.findByAccountNumber(event.getToAccountId());
+//                            .orElseThrow(() -> new RuntimeException("Account not found"));
 
                     account.setBalance(account.getBalance() + event.getAmount());
                     accountRepository.save(account);
 
                     log.info(
                             "CID={} EVENT={} STEP={} MESSAGE={}",
-                            event.getCorrelationId(),
+//                            event.getCorrelationId(),
                             event.getEventId(),
                             event.getStep(),
                             "CREDIT realizado"
@@ -140,7 +140,7 @@ public class TransactionConsumer {
                     //Crear evento de rollback
                     TransactionEvent rollbackEnvent = TransactionEvent.builder()
                             .eventId(event.getEventId() + "-ROLLBACK")
-                            .correlationId(event.getCorrelationId())
+//                            .correlationId(event.getCorrelationId())
                             .step("ROLLBACK")
                             .amount(event.getAmount())
                             .fromAccountId(event.getFromAccountId())
@@ -158,15 +158,15 @@ public class TransactionConsumer {
 
             } else if ("ROLLBACK".equalsIgnoreCase(event.getStep())) {
 
-                Account account = accountRepository.findById(event.getFromAccountId())
-                        .orElseThrow(() -> new RuntimeException("Account not found"));
+                Account account = accountRepository.findByAccountNumber(event.getFromAccountId());
+//                        .orElseThrow(() -> new RuntimeException("Account not found"));
 
                 account.setBalance(account.getBalance() + event.getAmount());
                 accountRepository.save(account);
 
                 log.info(
                         "CID={} EVENT={} STEP={} MESSAGE={}",
-                        event.getCorrelationId(),
+//                        event.getCorrelationId(),
                         event.getEventId(),
                         event.getStep(),
                         "ROLLBACK realizado (dinero retornado)"
@@ -210,7 +210,7 @@ public class TransactionConsumer {
 
         log.info(
                 "CID={} EVENT={} STEP={} MESSAGE={}",
-                event.getCorrelationId(),
+//                event.getCorrelationId(),
                 event.getEventId(),
                 event.getStep(),
                 "Received DLQ: "+payload

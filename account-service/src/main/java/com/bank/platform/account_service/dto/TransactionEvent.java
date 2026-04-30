@@ -14,8 +14,8 @@ public class TransactionEvent {
     private String type;
     private Double amount;
     private String step; // DEBIT | CREDIT
-    private Long fromAccountId;
-    private Long toAccountId;
+    private String fromAccountId;
+    private String toAccountId;
     private String status; //SUCCESS | FAILDE
     private String reason; //opcional (error)
     private String correlationId;

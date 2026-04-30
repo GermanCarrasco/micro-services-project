@@ -9,7 +9,7 @@ import lombok.*;
 @Setter
 @Builder
 public class TransferRequest {
-    private Long fromAccountId;
-    private Long toAccountId;
+    private String fromAccountId;
+    private String toAccountId;
     private Double amount;
 }

@@ -65,7 +65,7 @@ public class TransactionServiceImpl implements ITransactionService {
     }
 
     @Override
-    public List<TransactionResponse> getByAccount(Long accountId) {
+    public List<TransactionResponse> getByAccount(String accountId) {
         return transactionRepository.findByAccountId(accountId)
                 .stream().map(this::mapToResponse)
                 .toList();

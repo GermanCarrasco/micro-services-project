@@ -21,13 +21,13 @@ public class TransactionController {
         this.transactionService = transactionService;
     }
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<TransactionResponse> create(@RequestBody TransactionRequest transactionRequest) {
         return ResponseEntity.ok(transactionService.createTransaction(transactionRequest));
     }
 
     @GetMapping("/account/{accountId}")
-    public ResponseEntity<List<TransactionResponse>> getByAccount(@PathVariable Long accountId) {
+    public ResponseEntity<List<TransactionResponse>> getByAccount(@PathVariable String accountId) {
         return ResponseEntity.ok(transactionService.getByAccount(accountId));
     }
 

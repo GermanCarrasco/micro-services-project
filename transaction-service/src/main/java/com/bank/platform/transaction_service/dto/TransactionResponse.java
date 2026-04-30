@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class TransactionResponse {
 
     private Long id;
-    private Long accountId;
+    private String accountId;
     private String type;
     private Double amount;
     private LocalDateTime createdAt;

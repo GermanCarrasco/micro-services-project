@@ -19,7 +19,7 @@ public class AccountProducer {
 
         try{
             String message = objectMapper.writeValueAsString(transactionEvent);
-            kafkaTemplate.send("transaction-topic",message);
+            kafkaTemplate.send("transactions-topic",message);
 
             System.out.println("Evento enviado: " + transactionEvent.getStep());
 

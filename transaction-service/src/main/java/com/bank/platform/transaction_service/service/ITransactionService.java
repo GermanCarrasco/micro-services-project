@@ -9,7 +9,7 @@ import java.util.*;
 
 public interface ITransactionService {
     TransactionResponse createTransaction(TransactionRequest transactionRequest);
-    List<TransactionResponse> getByAccount(Long accountId);
+    List<TransactionResponse> getByAccount(String accountId);
     TransactionResponse mapToResponse(Transaction t);
     void transfer(TransferRequest request);
 }

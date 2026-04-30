@@ -4,13 +4,17 @@ import com.bank.platform.account_service.entity.OutboxEvent;
 import com.bank.platform.account_service.repository.IOutboxEventRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 
-
+@Transactional
 @Component
+@EnableScheduling
 @RequiredArgsConstructor
 public class OutboxScheduler {
 
@@ -19,13 +23,13 @@ public class OutboxScheduler {
 
     @Scheduled(fixedRate = 5000)
     public void processOutbox(){
-
+        System.out.println("Processing Outbox Events");
         List<OutboxEvent> events = outboxEventRepository.findByStatus("PENDING");
 
         for(OutboxEvent event: events){
             try {
 
-                kafkaTemplate.send("transaction-topic",event.getPayload());
+                kafkaTemplate.send("transactions-topic",event.getPayload());
 
                 event.setStatus("SENT");
                 outboxEventRepository.save(event);
